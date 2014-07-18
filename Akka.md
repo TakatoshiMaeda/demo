@@ -472,7 +472,7 @@ AkkaSpec という Akka のためのテストフレームワークがありま�
 ベンチマーク
 ------------
 
-[Cloud Haskell の調査内のベンチマーク](https://github.com/worksap-ate/wc3/wiki/Cloud-Haskell#%E8%BF%BD%E8%A8%98-2014-06-19)を参照してください
+[Cloud Haskell の調査内のベンチマーク](https://github.com/worksap-ate/demo/blob/master/Cloud-Haskell.md#%E8%BF%BD%E8%A8%98-2014-06-19)を参照してください
 
 
 Pickling and Spores
