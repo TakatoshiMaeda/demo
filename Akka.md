@@ -235,6 +235,13 @@ class ClientActor(server: ActorRef) extends Actor {
 よって、作った側のアクターシステムが落ちた場合は、作られたアクターも落ちることになります。
 
 
+### Serialization
+
+String や Int 型は特に Serialize/Deserialize を定義しなくてもよかったが、ユーザー定義の型を用いる場合は Serialize/Deserialize も定義する必要がある。
+
+(同じ定義かつグローバルに定義してあるものならOK?)
+(TODO)
+
 
 
 クラスタの構築
@@ -273,7 +280,27 @@ http://funini.com/kei/logos/clock.shtml がわかりやすいです。
 
 ### Seed
 
-設定ファイル内で、akka.cluster.seed-nodes が指定されていると、そこにはじめに通信しに行き、クラスタに入れてもらう。
+設定ファイル内で、akka.cluster.seed-nodes が指定されていると、そこにはじめに通信しに行き、クラスタに入れてもらいます。
+複数の seed が指定されている場合は、上から順番に通信しにいき、クラスタにいれてもらえればそれで終了、それ以降の seed には通信しに行きません。
+
+例えば、
+
+- A, B, C というノード(クラスタ)の akka-uri がこの順で akka.cluster.seed-nodes に指定されている
+- A ノードはなんらかの故障が発生していて通信できない状態
+- B, C ノードは正常な状態であったとする
+- B, C ノードは同一クラスタではなく、それぞれのクラスタの一員
+
+であるとします。
+
+この状態でノードを起動すると、まず A ノードに通信しようとするが失敗し、次に B ノードに通信し、B ノードのクラスタに入れてもらいます。クラスタに入れてもらったので、C ノードとは通信はしません。
+よって B ノードのクラスタのみに入ることになります。
+
+
+### CurrentClusterState
+
+unreachable のものも cluster.state.members に、status = Up の状態で入っているのが謎
+Unreachable Event が発生した時にそいつをはずす？
+
 
 ### 実際に
 
@@ -291,6 +318,7 @@ class HogeListener extends Actor {
     case MemberUp(member) => ... // クラスタにメンバーが追加されたときこのメッセージが
 
 ```
+
 
 ### Docker を使ってクラスタを構築する
 
@@ -325,8 +353,58 @@ SEED_PORT_1600_TCP_PROTO=tcp
 seed は、
 
 
+### ClusterClient
+
+[サンプルコード](https://github.com/amutake/actor-examples/tree/master/akka/cluster/cluster-client)
+
+ClusterClient を使うと、Cluster のノードに対して外部からメッセージを送ることができるようになります。
+
+```
+libraryDependencies ++= (
+  "akka.typesafe.com" %% "akka-contrib" % "2.3.4"
+)
+```
+が必要
+
+(cluster)
+```
+akka {
+  extensions = ["akka.contrib.pattern.ClusterReceptionistExtension"]
+}
+```
+
+(client)
+```
+akka {
+  provider = "akka.remote.RemoteActorRefProvider"
+  # または provider = "akka.cluster.ClusterActorRefProvider"
+  remote {
+    netty.tcp {
+      hostname = "127.0.0.1"
+      port = 0
+    }
+  }
+}
+```
+
+```scala
+val initialContacts = Set(
+  system.actorSelection("akka.tcp://cluster@127.0.0.1:2552/user/receptionist"),
+  system.actorSelection("akka.tcp://cluster@127.0.0.1:2553/user/receptionist")
+)
+val c = system.actorOf(ClusterClient.props(initialContacts), "client")
+
+c ! ClusterClient.Send("/user/worker", "hello worker")
+c ! ClusterClient.SendToAll("/user/worker", "hello workers")
+c ! ClusterClient.Publish("?", "hello")
+```
+
+ClusterClient.Send は、initialContacts のなかのどれかのノード(system.actorOf でアクターを作るときに決定)の、"/user/worker" にメッセージを送ります。
+ClusterClient.SendToAll は、クラスタの全てのノードの "/user/worker" にメッセージを送ります。
+ClusterClient.Publish もクラスタの全てのノードに送るようですが、第一引数に何を指定するのかわかりませんでした。topic を指定する、となっていますが……。
 
 
+これを使うと、worker のクラスタに対してタスクを投げるみたいなこともできるかもしれません。
 
 フォールトトレラントシステムの構築
 ----------------------------------
