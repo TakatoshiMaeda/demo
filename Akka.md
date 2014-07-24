@@ -399,9 +399,12 @@ c ! ClusterClient.SendToAll("/user/worker", "hello workers")
 c ! ClusterClient.Publish("?", "hello")
 ```
 
-ClusterClient.Send は、initialContacts のなかのどれかのノード(system.actorOf でアクターを作るときに決定)の、"/user/worker" にメッセージを送ります。
-ClusterClient.SendToAll は、クラスタの全てのノードの "/user/worker" にメッセージを送ります。
-ClusterClient.Publish もクラスタの全てのノードに送るようですが、第一引数に何を指定するのかわかりませんでした。topic を指定する、となっていますが……。
+- ClusterClient.Send は、クラスタ内のどれかのノードの、"/user/worker" というアクターにメッセージを送ります。
+  - はじめは initialContacts で指定したノードのどれか(system.actorOf でアクターを作る時点で決まる)の、"/user/worker" にメッセージを送ります。
+  - どのノードにメッセージを送るかというのは指定できません。
+  - 一度どれかの receptionist に繋げば、その receptionist が落ちても、クラスタ内の他のノードに送られるようになります。なのでクラスタ内の全てのノードが落ちない限り、クラスタ内のどれかにはメッセージが届きます。
+- ClusterClient.SendToAll は、クラスタの全てのノードの "/user/worker" にメッセージを送ります。
+- ClusterClient.Publish もクラスタの全てのノードにメッセージを送るようですが、第一引数に何を指定するのかわかりませんでした。topic を指定する、となっていますが……。
 
 
 これを使うと、worker のクラスタに対してタスクを投げるみたいなこともできるかもしれません。
