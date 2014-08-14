@@ -555,6 +555,35 @@ AkkaSpec という Akka のためのテストフレームワークがありま�
 
 [Cloud Haskell の調査内のベンチマーク](https://github.com/worksap-ate/demo/blob/master/Cloud-Haskell.md#%E8%BF%BD%E8%A8%98-2014-06-19)を参照してください
 
+その他
+------
+
+### メッセージ欠落
+
+参照: http://doc.akka.io/docs/akka/snapshot/general/message-delivery-reliability.html
+
+Akka はメッセージが必ず送られるということは保証しません。メッセージ欠落が起こるかもしれません。
+ピュアなアクターモデルでは公平性が保証されています。これは「いつかは必ずメッセージが受け取られる」という性質です。
+
+Akka ではこれを at-most-once delivery と言っていて、あるメッセージは、0回(メッセージ欠落)または1回(正常)送られます。
+
+
+### メッセージが受け取られる順番
+
+参照: http://doc.akka.io/docs/akka/snapshot/general/message-delivery-reliability.html
+
+Akka では、メッセージの順番は保存されます(ピュアなアクターモデルでは順番については公平性以外はなにも言っていません)。
+
+つまり、アクターAがアクターBにメッセージM1,M2,M3をこの順番で送ったとき、アクターBは必ずM1,M2,M3の順番でメッセージを受け取るということです。
+ただし、メッセージ欠落が起こるとM1,M3のような順番になることもあります。
+
+1. アクターAがアクターBにメッセージM1を送る
+2. アクターAがアクターCにメッセージM2を送る
+3. アクターBがメッセージM1を受け取り、アクターCにそのまま送る
+
+こういう状況のときは、アクターCはM1,M2の順番で受け取ることもあるし、M2,M1の順番で受け取ることもあります。
+
+
 
 Pickling and Spores
 -------------------
