@@ -319,6 +319,27 @@ class HogeListener extends Actor {
 
 ```
 
+### Subscribe
+
+リスナーを作るときに、クラスタに関するどのような情報を受け取るかを指定できる。
+
+```scala
+class Listener exntends Actor {
+  val cluster = Cluster(context.system)
+  override def preStart() = {
+    cluster.subscribe(self, classOf[MemberUp], classOf[UnreachableMember])
+  }
+  def receive = {
+    case MemberUp(member) => ...
+    case UnreachableMember(member) => ...
+  }
+}
+```
+
+のように、`preStart` メソッドなどの中で `cluster.subscribe` を実行することで、購読する情報を指定する。
+
+指定できるものは `akka.cluster.ClusterEvent` で定義されているもの。
+
 
 ### Docker を使ってクラスタを構築する
 
