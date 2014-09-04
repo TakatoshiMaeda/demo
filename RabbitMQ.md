@@ -198,6 +198,14 @@ rabbitmq で実際に module_info を使って属性を取得している関数�
 rabbit_table:definitions/0 にいろいろテーブルがある。
 
 
+#### worker_pool
+
+`rabbit_sup:start_supervisor_child(worker_pool_sup)` が呼ばれ、`worker_pool_sup:start_link()` が実行される。
+[`supervisor:start_link/2`](http://www.erlang.org/doc/man/supervisor.html#start_link-2) は、Module:init/1 を与えられた引数でもって呼び出すという関数なので、`worker_pool_sup:init/1` が実行される。
+
+
 ### その他
 
 rabbit_sup は supervisor 関連の便利関数がおいてあるモジュール。
+
+例えば `{mfa, {rabbit_sup, start_supervisor_child, [worker_pool_sup]}}` の場合は、`rabbit_sup:start_supervisor_child(worker_pool_sup)` が呼ばれ、[supervisor:start_child/2](http://www.erlang.org/doc/man/supervisor.html#start_child-2) によって `worker_bool_sup:start_link()` が実行される。
